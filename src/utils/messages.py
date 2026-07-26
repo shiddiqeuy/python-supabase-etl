@@ -18,7 +18,19 @@ MENU_ITEMS = [
     ("1", "[bold green]Upload Batch Data Penjualan[/bold green]"),
     ("2", "[bold yellow]Upload Batch Pengeluaran[/bold yellow]"),
     ("3", "[bold blue]Cek Koneksi[/bold blue]"),
-    ("4", "[bold magenta]Keluar[/bold magenta]"),
+    ("4", "[bold cyan]Fitur Sales Dashboard[/bold cyan]"),
+    ("5", "[bold magenta]Keluar[/bold magenta]"),
+]
+
+SUBMENU_ITEMS = [
+    ("1", "Ringkasan Penjualan Periode"),
+    ("2", "Performa Sales Person"),
+    ("3", "Performa Produk"),
+    ("4", "Performa Customer"),
+    ("5", "Status Pembayaran (Piutang)"),
+    ("6", "Tren Waktu (Grafik ASCII)"),
+    ("7", "Export Data"),
+    ("0", "Kembali ke Menu Utama"),
 ]
 
 SUMMARY_LABELS = {

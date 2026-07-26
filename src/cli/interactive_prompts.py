@@ -16,6 +16,7 @@ from src.utils.messages import (
     CONNECTION_FAILED,
     CONNECTION_SUCCESS,
     MENU_ITEMS,
+    SUBMENU_ITEMS,
     MSG_FILE_NOT_FOUND,
     PROMPT_BATCH_SIZE,
     PROMPT_DRY_RUN,
@@ -33,11 +34,24 @@ def print_banner_sales() -> None:
 
 def print_menu() -> None:
     print_banner_sales()
-    table = Table(show_header=False, border_style="cyan", padding=(0, 2))
+    from rich import box
+    table = Table(show_header=False, border_style="cyan", padding=(0, 2), box=box.ASCII)
     table.add_column("No", style="bold cyan", width=6, justify="center")
     table.add_column("Menu", style="bold white", width=50)
 
     for no, text in MENU_ITEMS:
+        table.add_row(no, text)
+
+    console.print(table)
+
+
+def print_dashboard_submenu() -> None:
+    from rich import box
+    table = Table(title="Submenu Sales Dashboard", show_header=False, border_style="cyan", padding=(0, 2), box=box.ASCII)
+    table.add_column("No", style="bold cyan", width=6, justify="center")
+    table.add_column("Fitur Laporan", style="bold white", width=50)
+
+    for no, text in SUBMENU_ITEMS:
         table.add_row(no, text)
 
     console.print(table)

@@ -127,8 +127,8 @@ class TestMessages(unittest.TestCase):
         expected_keys = {"total", "success", "skipped", "errors", "duration", "total_amount"}
         self.assertEqual(set(SUMMARY_LABELS.keys()), expected_keys)
 
-    def test_menu_items_has_four_items(self):
-        self.assertEqual(len(MENU_ITEMS), 4)
+    def test_menu_items_has_five_items(self):
+        self.assertEqual(len(MENU_ITEMS), 5)
 
     def test_connection_success_non_empty(self):
         self.assertIn("berhasil", CONNECTION_SUCCESS.lower())
