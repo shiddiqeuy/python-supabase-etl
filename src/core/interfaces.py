@@ -26,7 +26,7 @@ class DataRepository(ABC):
         ...
 
     @abstractmethod
-    def insert_batch(self, table: str, records: List[Dict[str, Any]]) -> List[int]:
+    def insert_batch(self, table: str, records: List[Dict[str, Any]], id_column: str = "id") -> List[int]:
         """Insert banyak record secara batch, return list ID."""
         ...
 

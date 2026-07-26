@@ -118,7 +118,7 @@ class SalesImporter(BaseImporter):
                     f"[yellow]Peringatan: Gagal menyelesaikan produk '{product.produk}': {exc}[/yellow]"
                 )
         if items:
-            self._repository.insert_batch("invoice_items", items)
+            self._repository.insert_batch("invoice_items", items, id_column="invoice_item_id")
 
     def get_error_prefix(self) -> str:
         return "error_log"

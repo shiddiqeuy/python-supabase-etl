@@ -61,13 +61,16 @@ class SupabaseRepository(DataRepository):
         except Exception as exc:
             raise ImportError(f"Gagal insert ke tabel '{table}': {exc}") from exc
 
-    def insert_batch(self, table: str, records: List[Dict[str, Any]]) -> List[int]:
+    def insert_batch(self, table: str, records: List[Dict[str, Any]], id_column: str = "id") -> List[int]:
         """Insert banyak record secara batch, return list ID."""
         if not records:
             return []
         try:
             result = self.client.table(table).insert(records).execute()
-            return [int(row["id"]) for row in result.data]
+            if not result.data:
+                return []
+            pk_col = id_column if (id_column in result.data[0]) else ("id" if "id" in result.data[0] else list(result.data[0].keys())[0])
+            return [int(row[pk_col]) for row in result.data]
         except Exception as exc:
             raise ImportError(f"Gagal batch insert ke tabel '{table}': {exc}") from exc
 
