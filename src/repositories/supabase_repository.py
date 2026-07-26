@@ -53,11 +53,11 @@ class SupabaseRepository(DataRepository):
             pass
         return None
 
-    def insert_record(self, table: str, data: Dict[str, Any]) -> int:
+    def insert_record(self, table: str, data: Dict[str, Any], id_column: str = "id") -> int:
         """Insert satu record, return ID yang di-generate."""
         try:
             result = self.client.table(table).insert(data).execute()
-            return int(result.data[0]["id"])
+            return int(result.data[0][id_column])
         except Exception as exc:
             raise ImportError(f"Gagal insert ke tabel '{table}': {exc}") from exc
 

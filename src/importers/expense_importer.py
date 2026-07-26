@@ -107,16 +107,18 @@ class ExpenseImporter(BaseImporter):
             "bukti_tf": record.bukti_tf,
             "created_at": pd.Timestamp.now().isoformat(),
         }
-        return self._repository.insert_record("pengeluaran", expense_data)
+        return self._repository.insert_record("pengeluaran", expense_data, id_column="pengeluaran_id")
 
     def get_error_prefix(self) -> str:
         return "error_expense_log"
 
     def _print_preview(self, records: List[ExpenseRecord]) -> None:
+        from rich import box
         table = Table(
-            title=f"Pratinjau (10 Record Pertama dari {len(records)})",
+            title=f"Pratinjau Top 5 Data Pertama (dari {len(records)} Record)",
             show_header=True,
             show_lines=False,
+            box=box.ASCII,
         )
         table.add_column("Tanggal", style="cyan", width=12)
         table.add_column("COA", style="magenta", width=20)
@@ -124,7 +126,7 @@ class ExpenseImporter(BaseImporter):
         table.add_column("Pengeluaran", style="yellow", width=25)
         table.add_column("Jumlah", justify="right", style="red", width=15)
 
-        for rec in records[:10]:
+        for rec in records[:5]:
             table.add_row(
                 str(rec.tanggal),
                 rec.kode_coa,

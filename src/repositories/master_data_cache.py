@@ -4,6 +4,14 @@ from typing import Any, Dict, Optional
 
 from src.core.interfaces import DataRepository, MasterDataCache
 
+TABLE_SCHEMA_MAP: Dict[str, Dict[str, str]] = {
+    "customers": {"id_col": "customer_id", "name_col": "nama_customer"},
+    "products": {"id_col": "product_id", "name_col": "nama_produk"},
+    "sales_persons": {"id_col": "sales_person_id", "name_col": "nama_sales"},
+    "coa": {"id_col": "coa_id", "name_col": "kode_coa"},
+    "kategori_pengeluaran": {"id_col": "kategori_id", "name_col": "nama_kategori"},
+}
+
 
 class MasterDataCache(MasterDataCache):
     """
@@ -18,7 +26,12 @@ class MasterDataCache(MasterDataCache):
     def _make_key(self, table: str, name: str) -> str:
         return f"{table}:{name}"
 
-    def resolve_id(self, table: str, name: str, extra_fields: Optional[Dict[str, Any]] = None) -> int:
+    def resolve_id(
+        self,
+        table: str,
+        name: str,
+        extra_fields: Optional[Dict[str, Any]] = None,
+    ) -> int:
         """
         Dapatkan ID untuk nama di tabel master.
         Jika belum ada, insert record baru menggunakan nama + extra_fields.
@@ -28,14 +41,22 @@ class MasterDataCache(MasterDataCache):
         if cache_key in self._cache:
             return self._cache[cache_key]
 
-        record = self._repository.select_one(table, {"nama": name})
+        schema = TABLE_SCHEMA_MAP.get(
+            table, {"id_col": "id", "name_col": "nama"}
+        )
+        id_col = schema["id_col"]
+        name_col = schema["name_col"]
+
+        record = self._repository.select_one(table, {name_col: name})
         if record:
-            record_id = int(record["id"])
+            record_id = int(record[id_col])
         else:
-            payload: Dict[str, Any] = {"nama": name}
+            payload: Dict[str, Any] = {name_col: name}
             if extra_fields:
                 payload.update(extra_fields)
-            record_id = self._repository.insert_record(table, payload)
+            record_id = self._repository.insert_record(
+                table, payload, id_column=id_col
+            )
 
         self._cache[cache_key] = record_id
         return record_id

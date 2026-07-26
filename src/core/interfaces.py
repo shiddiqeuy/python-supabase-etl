@@ -21,7 +21,7 @@ class DataRepository(ABC):
         ...
 
     @abstractmethod
-    def insert_record(self, table: str, data: Dict[str, Any]) -> int:
+    def insert_record(self, table: str, data: Dict[str, Any], id_column: str = "id") -> int:
         """Insert satu record, return ID yang di-generate."""
         ...
 
@@ -43,6 +43,11 @@ class DataRepository(ABC):
     @abstractmethod
     def count(self, table: str) -> int:
         """Kembalikan jumlah record di tabel."""
+        ...
+
+    @abstractmethod
+    def select_one(self, table: str, filters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Ambil satu record dengan filter kolom=nilai."""
         ...
 
 

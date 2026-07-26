@@ -101,6 +101,12 @@ class BaseImporter:
         error_rows: List[Dict[str, Any]] = []
         amounts: List[float] = []
 
+        console.print("[cyan]Memeriksa koneksi Supabase...[/cyan]")
+        if self._repository.test_connection():
+            console.print("[bold green]+ Status Koneksi Supabase: Terhubung (OK)[/bold green]\n")
+        else:
+            console.print("[bold red]- Status Koneksi Supabase: Gagal / Offline![/bold red]")
+
         df = ExcelReader.read(str(source.path), source.sheet_name)
         console.print(f"[green]+ Memuat {len(df)} baris dari {source.path}[/green]")
 
@@ -193,9 +199,10 @@ class BaseImporter:
         total_amount: float,
     ) -> None:
         """Tampilkan ringkasan impor. Override di subclass jika perlu format khusus."""
+        from rich import box
         from rich.table import Table
 
-        table = Table(title="Ringkasan Impor", show_header=True, border_style="cyan")
+        table = Table(title="Ringkasan Impor", show_header=True, border_style="cyan", box=box.ASCII)
         table.add_column("Metrik", style="bold cyan", width=30)
         table.add_column("Nilai", justify="right", style="bold white", width=20)
 

@@ -1,17 +1,17 @@
 """Semua string Bahasa Indonesia terpusat untuk aplikasi."""
 
 BANNER_SALES = """
-[bold cyan]╔══════════════════════════════════════════════════════════╗[/bold cyan]
-[bold cyan]║[/bold cyan]  [bold white]   Impor Data Penjualan ke Supabase[/bold white]            [bold cyan]║[/bold cyan]
-[bold cyan]║[/bold cyan]  [dim]Impor Excel/CSV → Tabel Invoice Ter-normalisasi[/dim]  [bold cyan]║[/bold cyan]
-[bold cyan]╚══════════════════════════════════════════════════════════╝[/bold cyan]
+[bold cyan]+----------------------------------------------------------+[/bold cyan]
+[bold cyan]|[/bold cyan]  [bold white]   Impor Data Penjualan ke Supabase[/bold white]            [bold cyan]|[/bold cyan]
+[bold cyan]|[/bold cyan]  [dim]Impor Excel/CSV -> Tabel Invoice Ter-normalisasi[/dim]  [bold cyan]|[/bold cyan]
+[bold cyan]+----------------------------------------------------------+[/bold cyan]
 """
 
 BANNER_EXPENSE = """
-[bold cyan]╔══════════════════════════════════════════════════════════╗[/bold cyan]
-[bold cyan]║[/bold cyan]  [bold white]   Impor Data Pengeluaran ke Supabase[/bold white]         [bold cyan]║[/bold cyan]
-[bold cyan]║[/bold cyan]  [dim]Impor Excel/CSV → Tabel Pengeluaran[/dim]            [bold cyan]║[/bold cyan]
-[bold cyan]╚══════════════════════════════════════════════════════════╝[/bold cyan]
+[bold cyan]+----------------------------------------------------------+[/bold cyan]
+[bold cyan]|[/bold cyan]  [bold white]   Impor Data Pengeluaran ke Supabase[/bold white]         [bold cyan]|[/bold cyan]
+[bold cyan]|[/bold cyan]  [dim]Impor Excel/CSV -> Tabel Pengeluaran[/dim]            [bold cyan]|[/bold cyan]
+[bold cyan]+----------------------------------------------------------+[/bold cyan]
 """
 
 MENU_ITEMS = [

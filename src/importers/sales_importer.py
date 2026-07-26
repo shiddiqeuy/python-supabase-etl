@@ -99,7 +99,7 @@ class SalesImporter(BaseImporter):
             "catatan": record.catatan,
             "bukti_transfer": record.bukti_transfer,
         }
-        return self._repository.insert_record("invoices", invoice_data)
+        return self._repository.insert_record("invoices", invoice_data, id_column="invoice_id")
 
     def _insert_relations(self, record: Invoice, invoice_id: int) -> None:
         items = []
@@ -124,17 +124,19 @@ class SalesImporter(BaseImporter):
         return "error_log"
 
     def _print_preview(self, records: List[Invoice]) -> None:
+        from rich import box
         table = Table(
-            title=f"Pratinjau (10 Record Pertama dari {len(records)})",
+            title=f"Pratinjau Top 5 Data Pertama (dari {len(records)} Record)",
             show_header=True,
             show_lines=False,
+            box=box.ASCII,
         )
         table.add_column("No. Invoice", style="cyan", width=25)
         table.add_column("Pelanggan", style="magenta", width=30)
         table.add_column("Produk", justify="center", style="green", width=10)
         table.add_column("Total", justify="right", style="yellow", width=15)
 
-        for inv in records[:10]:
+        for inv in records[:5]:
             table.add_row(
                 inv.no_invoice,
                 inv.customer_name,
