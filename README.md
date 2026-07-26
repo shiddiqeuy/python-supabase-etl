@@ -1,208 +1,249 @@
-# Supabase Importer
+# 🚀 Supabase ETL Importer & Sales Dashboard CLI
 
-Aplikasi ETL untuk mengimpor data Excel/CSV berformat lebar ke database PostgreSQL Supabase yang sudah dinormalisasi.
+Aplikasi **ETL (Extract, Transform, Load)** dan **Sales Dashboard berbasis CLI Python** yang dirancang untuk mengimpor data transaksi Excel/CSV berformat lebar (*wide-format*) ke database PostgreSQL Supabase yang sudah dinormalisasi (3NF), serta menyediakan analitik penjualan real-time.
 
 **Created by Muhammad Shiddiq Azis**
 
-## Struktur Proyek
+---
 
+## 💡 Reason Behind Building This (Alasan Pembuatan)
+
+Banyak UMKM, bisnis ritel, maupun departemen operasional yang mencatat transaksi penjualan dan pengeluaran harian menggunakan lembar kerja Excel/CSV berformat lebar (*wide-format spreadsheets*). Pendekatan ini sering menimbulkan masalah serius:
+1. **Ketidakberaturan Data (*Data Redundancy & Inconsistency*):** Nama pelanggan, produk, dan sales person ditulis berulang kali tanpa dinormalisasi, memicu duplikasi data dan rentan salah ketik (*typo*).
+2. **Ketiadaan *Audit Trail* & Validasi Schema:** Sulit melacak record yang gagal diimpor atau memiliki format tanggal/nominal yang rusak.
+3. **Kesulitan Analisis Real-Time:** Data mentah di spreadsheet tidak dapat langsung diintegrasikan dengan database relational modern (seperti PostgreSQL Supabase) maupun dashboard analitik performa bisnis.
+
+### 🎯 Solusi yang Dihadirkan Aplikasi Ini:
+- **Otomatisasi Normalisasi (Get-or-Create):** Membaca spreadsheet berformat lebar, lalu secara otomatis mencari atau membuat master data (`customers`, `products`, `sales_persons`, `coa`, `kategori_pengeluaran`) di database Supabase secara dinamis.
+- **Transaksional Relasional:** Mengonversi baris transaksi menjadi record `invoices`, relasi `invoice_items`, serta `pengeluaran` dengan penanganan Primary Key / Foreign Key dinamis.
+- **Fault-Tolerant ETL Engine:** Dilengkapi mode *Dry-Run*, *Top 5 Preview*, indikator *Progress Bar* baris-demi-baris, *Supabase Health Check*, serta pencatatan otomatis record error ke berkas CSV (`error_logs/`).
+- **Interactive 2-Level CLI & Direct Dashboard Commands:** Menyediakan dashboard penjualan interaktif (`salesdash`) untuk melihat omzet, COGS, margin, performa sales/produk/customer, piutang, serta tren waktu dengan opsi ekspor ke CSV & Excel (XLSX).
+
+---
+
+## ✨ Fitur Utama
+
+- **📦 ETL Sales & Expense Importer:**
+  - Impor berkas `.xlsx` dan `.csv` transaksi penjualan & pengeluaran.
+  - Resolusi master data dinamis (`MasterDataCache`) dengan pencarian `TABLE_SCHEMA_MAP`.
+  - Dukungan mode `--dry-run` untuk validasi tanpa insert ke DB.
+  - Tampilan *Top 5 Data Preview* dan *Progress Bar* baris-demi-baris.
+  - Pengecekan status koneksi Supabase di awal eksekusi.
+- **📊 Sales Dashboard CLI (`salesdash`):**
+  - **Summary:** Ringkasan Total Omzet, Total COGS, Total Margin, Margin %, dan Rata-rata Invoice.
+  - **Performa Sales Person:** Analisis penjualan per sales person (termasuk pengelompokan `Unassigned` untuk invoice tanpa sales).
+  - **Performa Produk:** Perhitungan margin bersih per produk (`SUM(qty*harga) - SUM(qty*cogs)`).
+  - **Performa Customer:** Analisis omzet dan sisa piutang (*outstanding*) per customer.
+  - **Status Pembayaran (Piutang):** Daftar invoice terurut tanggal paling lama ke paling baru (*oldest first*) dengan filter status (`lunas`, `belum_lunas`, `sebagian`).
+  - **Tren Waktu:** Bucketing tren omzet harian, mingguan, dan bulanan.
+  - **Parameterized Filters:** Kombinasi filter (AND logic) untuk `--customer`, `--product`, `--sales`, `--status`, `--min-amount`, `--max-amount`, dan rentang tanggal.
+  - **Ekspor Data:** Ekspor hasil analisis ke CSV & Excel (XLSX).
+- **📱 Menu Interaktif 2-Level CLI:**
+  - **Menu Utama (Level 1):** Impors Sales, Impor Expense, Health Check, Dashboard, Exit.
+  - **Submenu Sales Dashboard (Level 2):** Fitur Laporan 1–7 + `0` Kembali ke Menu Utama.
+
+---
+
+## 📂 Struktur Proyek
+
+```text
+python-supabase-etl/
+├── DATABASE_SCHEMA.md         # Dokumentasi resmi skema tabel database Supabase
+├── README.md                  # Dokumentasi utama proyek
+├── requirements.txt           # Dependencies Python
+├── src/
+│   ├── __init__.py
+│   ├── __main__.py            # Entry point utama (Interactive Menu 2-Level & CLI launcher)
+│   ├── cli/
+│   │   ├── app.py             # Registrasi Typer app & sub-commands
+│   │   ├── dashboard_command.py # CLI sub-commands Sales Dashboard
+│   │   ├── expense_command.py   # CLI sub-commands Expense Importer
+│   │   ├── interactive_prompts.py # Komponen UI Rich & prompt interaktif menu
+│   │   └── sales_command.py     # CLI sub-commands Sales Importer
+│   ├── core/
+│   │   ├── config.py          # Settings dari environment variables (.env)
+│   │   ├── exceptions.py      # Custom exceptions aplikasi
+│   │   ├── interfaces.py      # Abstract Base Classes (ABC)
+│   │   └── models.py          # Dataclasses (Invoice, ExpenseRecord, ImportResult)
+│   ├── importers/
+│   │   ├── base_importer.py   # Logika ETL generik (Template Method Pattern)
+│   │   ├── expense_importer.py # Importer khusus data pengeluaran
+│   │   └── sales_importer.py   # Importer khusus data penjualan/invoice
+│   ├── readers/
+│   │   └── excel_reader.py    # Pembaca & pemvalidasi file Excel/CSV
+│   ├── reports/
+│   │   ├── __init__.py
+│   │   ├── exporter.py        # Eksportir hasil ke CSV & Excel (XLSX)
+│   │   ├── filter.py          # Parameterized filters (AND logic)
+│   │   └── reports.py         # Kalkulasi agregasi murni (Omzet, Margin, Tren)
+│   ├── repositories/
+│   │   ├── dashboard_repository.py # Repository query dashboard
+│   │   ├── master_data_cache.py   # Cache generik get-or-create nama -> ID
+│   │   └── supabase_repository.py  # Supabase client wrapper & PostgREST query
+│   └── utils/
+│       ├── logger.py          # Error logger ke berkas CSV
+│       ├── messages.py        # Teks Bahasa Indonesia & konstanta UI
+│       └── progress.py        # Wrapper Rich progress bar
+└── tests/                     # 156 Automated Test Cases
+    ├── test_dashboard_cli.py
+    ├── test_dashboard_db.py
+    ├── test_dashboard_filters.py
+    ├── test_dashboard_menu.py
+    ├── test_master_data_cache.py
+    ├── test_reports.py
+    ├── test_sales_importer.py
+    └── ...
 ```
-src/
-├── __init__.py
-├── __main__.py              # Entry point: python -m src
-├── cli/
-│   ├── __init__.py
-│   ├── app.py                # Typer app, daftar command
-│   ├── sales_command.py
-│   └── expense_command.py
-├── core/
-│   ├── __init__.py
-│   ├── config.py             # Settings dari environment variables
-│   ├── interfaces.py         # ABC: DataRepository, MasterDataCache, Importer
-│   ├── models.py             # Dataclasses: Invoice, ExpenseRecord, dst
-│   └── exceptions.py         # Custom exceptions
-├── importers/
-│   ├── __init__.py
-│   ├── base_importer.py      # Logika ETL generik (Template Method)
-│   ├── sales_importer.py
-│   └── expense_importer.py
-├── repositories/
-│   ├── __init__.py
-│   ├── supabase_repository.py
-│   └── master_data_cache.py  # Cache generik nama→ID
-├── readers/
-│   ├── __init__.py
-│   └── excel_reader.py       # Baca & validasi file sumber
-└── utils/
-    ├── __init__.py
-    ├── logger.py              # Error log ke CSV
-    ├── progress.py            # Wrapper rich.progress
-    └── messages.py            # Teks Bahasa Indonesia terpusat
-```
 
-## Prasyarat
+---
 
-- Python 3.10+
-- Virtual environment disarankan
-- Akun Supabase dengan project aktif
+## 🛠️ Prasyarat & Instalasi
 
-## Instalasi
+### 1. Prasyarat System
+- **Python 3.10+** (Direkomendasikan Python 3.11)
+- Project aktif di **Supabase** (PostgreSQL)
 
+### 2. Instalasi Dependensi
 ```bash
+# Clone repository
+git clone https://github.com/shiddiqeuy/python-supabase-etl.git
+cd python-supabase-etl
+
+# Buat virtual environment
 python -m venv .venv
 .venv\Scripts\activate
+
+# Install requirements
 pip install -r requirements.txt
 ```
 
-## Konfigurasi Environment Variables
-
-Karena repository ini bersifat **public**, JANGAN pernah commit file `.env` atau kredensial sunggan ke repository.
-
-Untuk lokal, salin `.env.example` menjadi `.env` dan isi dengan kredensial Anda:
-
+### 3. Konfigurasi Environment Variables
+Buat berkas `.env` di root direktori (salin dari `.env.example`):
 ```bash
 cp .env.example .env
 ```
+Isi variabel dengan kredensial Supabase Anda:
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+```
 
-Untuk **GitHub CI/CD**, konfigurasikan Secrets di repository Settings:
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+---
 
-Lihat bagian [GitHub CI/CD](#github-cicd) untuk detailnya.
+## 🚀 Penggunaan Aplikasi
 
-## Penggunaan
+### 1. Mode Menu Interaktif (Bahasa Indonesia)
+Jalankan aplikasi tanpa argumen untuk membuka Menu Interaktif 2-Level:
+```bash
+.venv\Scripts\python -m src
+```
 
-### CLI
+#### Tampilan Menu Utama:
+```text
++----------------------------------------------------+
+| 1 | Upload Batch Data Penjualan                    |
+| 2 | Upload Batch Pengeluaran                       |
+| 3 | Cek Koneksi                                    |
+| 4 | Fitur Sales Dashboard                          |
+| 5 | Keluar                                         |
++----------------------------------------------------+
+```
+
+Memilih opsi `4` akan mengarahkan pengguna ke **Submenu Sales Dashboard**:
+```text
++----------------------------------------------------+
+| 1 | Ringkasan Penjualan Periode                    |
+| 2 | Performa Sales Person                          |
+| 3 | Performa Produk                                |
+| 4 | Performa Customer                              |
+| 5 | Status Pembayaran (Piutang)                    |
+| 6 | Tren Waktu (Grafik ASCII)                       |
+| 7 | Export Data                                    |
+| 0 | Kembali ke Menu Utama                          |
++----------------------------------------------------+
+```
+
+### 2. Mode Direct Sub-command CLI (Typer)
+Jalankan perintah spesifik secara langsung:
 
 ```bash
-# Bantuan
-python -m src --help
-
-# Impor penjualan/invoice
+# Impor Data Penjualan/Invoice
 python -m src sales import-data data/invoices.xlsx --sheet "Sheet1"
 
-# Impor pengeluaran
+# Impor Data Pengeluaran (Mode Dry-Run)
 python -m src expense import-expense data/pengeluaran.csv --dry-run
+
+# Dashboard Summary Penjualan
+python -m src dashboard summary --from 2026-01-01 --to 2026-12-31
+
+# Dashboard Performa Produk dengan Filter Parameter
+python -m src dashboard by-product --sales "Budi" --status "belum_lunas"
+
+# Bantuan CLI
+python -m src --help
 ```
 
-### Opsi Umum
+---
 
-- `--sheet / -s` : Nama sheet untuk file Excel
-- `--dry-run` : Validasi data tanpa insert ke database
-- `--batch-size / -b` : Ukuran batch (default: 100)
-- `--verbose / -v` : Output verbose
-
-### Menu Interaktif
-
-Jalankan tanpa argumen untuk menu interaktif Bahasa Indonesia:
-
-```bash
-python -m src
-```
-
-## Workflow & Flowchart
-
-Berikut adalah alur kerja end-to-end aplikasi ini:
+## 🔄 Workflow & Architecture Flowchart
 
 ```mermaid
 flowchart TD
     A["Mulai: python -m src"] --> B{Ada argumen CLI?}
-    B -->|Tidak| C["Tampilkan Menu Interaktif"]
-    B -->|Ya| D["Parse argumen Typer"]
-    
-    C --> C1["Pilih: 1. Sales, 2. Expense, 3. Cek Koneksi, 4. Keluar"]
-    C1 -->|1| D
-    C1 -->|2| D
-    C1 -->|3| E["Load Settings dari .env"]
-    C1 -->|4| Z["Keluar"]
-    
+    B -->|Tidak| C["Menu Utama Interaktif (Level 1)"]
+    B -->|Ya| D["Parse sub-command Typer"]
+
+    C --> C1{"Pilihan Menu Utama"}
+    C1 -->|1| IMP_SALES["Impor Sales Penjualan"]
+    C1 -->|2| IMP_EXPENSE["Impor Pengeluaran"]
+    C1 -->|3| HEALTH["Check Status Supabase"]
+    C1 -->|4| SUBMENU["Submenu Sales Dashboard (Level 2)"]
+    C1 -->|5| EXIT["Keluar Application (exit 0)"]
+
+    SUBMENU --> S1{"Pilihan Submenu Dashboard"}
+    S1 -->|1| R_SUM["Ringkasan Penjualan"]
+    S1 -->|2| R_SALES["Performa Sales Person"]
+    S1 -->|3| R_PROD["Performa Produk"]
+    S1 -->|4| R_CUST["Performa Customer"]
+    S1 -->|5| R_PAY["Status Pembayaran / Piutang"]
+    S1 -->|6| R_TREND["Tren Waktu (Daily/Weekly/Monthly)"]
+    S1 -->|7| R_EXP["Export CSV / XLSX"]
+    S1 -->|0| C
+
+    IMP_SALES --> E["Load Settings & DB Connection"]
+    IMP_EXPENSE --> E
     D --> E
-    E --> F["Buat SupabaseRepository\n(Settings di-inject)"]
-    F --> G["Buat MasterDataCache\n(Repository di-inject)"]
-    G --> H["Pilih Importer:\nSalesImporter / ExpenseImporter"]
-    
-    H --> I["ExcelReader.read()\nBaca file .xlsx/.csv"]
-    I --> J["transform_dataframe()\nParse lebar -> terstruktur"]
-    J --> K{Ada record valid?}
-    K -->|Tidak| L["Tampilkan: Tidak ada data"]
-    K -->|Ya| M{Dry-run?}
-    
-    M -->|Ya| N["Tampilkan preview\n10 record pertama"]
-    N --> Z
-    
-    M -->|Tidak| O["Loop record dengan Progress Bar"]
-    O --> P["validate()\nCek duplikat / data lengkap"]
-    P -->|Invalid| Q["Skip -> Catat error"]
-    P -->|Valid| R["_insert_record()\nInsert record utama"]
-    R --> S["_insert_relations()\nInsert relasi (invoice_items)"]
-    S --> T["Update statistik"]
-    Q --> T
-    
-    T --> U{Ada lagi?}
-    U -->|Ya| O
-    U -->|Tidak| V["save_error_log()\nSimpan error CSV jika ada"]
-    V --> W["print_summary()\nTampilkan ringkasan"]
-    W --> Z
-    
-    subgraph "Master Table Resolution (get-or-create)"
-        R --> R1["cache.resolve_id('customers', nama)"]
-        R1 --> R2{Ada di cache?}
-        R2 -->|Ya| R3[Return cached ID]
-        R2 -->|Tidak| R4["SELECT * FROM table WHERE nama = ?"]
-        R4 --> R5{Ada di DB?}
-        R5 -->|Ya| R6[Cache & return ID]
-        R5 -->|Tidak| R7["INSERT INTO table (nama) VALUES (?)"]
-        R7 --> R8[Cache & return new ID]
-        R6 --> R3
-        R8 --> R3
-    end
+
+    E --> F["MasterDataCache: Get-or-Create IDs\n(customers, products, sales_persons, coa, kategori)"]
+    F --> G["ExcelReader: Read & Validate Wide-Format Spreadsheets"]
+    G --> H["Transform Data -> Structured Models (Invoice/Expense)"]
+    H --> I["Batch Insert Database Supabase"]
+    I --> J["Save Failed Records to error_logs/*.csv"]
+    J --> K["Display Rich Summary Table"]
 ```
 
-## Konvensi Kode
+---
 
-- **Dependency Injection** lewat ABC `core/interfaces.py`
-- **Repository Pattern** untuk akses data Supabase
-- **Template Method** di `importers/base_importer.py`
-- **Single Responsibility** pada setiap modul
-- Semua fungsi publik memiliki type hinting dan docstring
+## 🧪 Testing & Automated Verification
 
-## Testing
+Seluruh fungsionalitas ETL dan Sales Dashboard dilindungi oleh test suite otomatis sebanyak **156 Test Cases** dengan tingkat kelolosan **100% PASS**.
 
+Jalankan pengujian unit dan integrasi:
 ```bash
-python -m unittest discover -s tests -p "test_*.py" -v
+.venv\Scripts\python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-## GitHub CI/CD
+---
 
-Repository ini menggunakan GitHub Actions untuk automated testing. Workflow file terletak di `.github/workflows/ci.yml`.
+## 📝 Konvensi Arsitektur Kode
 
-### Setup GitHub Secrets
+- **Dependency Injection:** Diterapkan melalui interface di `src/core/interfaces.py`.
+- **Repository Pattern:** Memisahkan logika akses data Supabase di `src/repositories/`.
+- **Template Method Pattern:** Mematangkan alur kerja ETL di `src/importers/base_importer.py`.
+- **Pure Functional Aggregations:** Perhitungan laporan bisnis di `src/reports/reports.py` tidak memiliki efek samping (*side-effect free*).
 
-Agar CI/CD berjalan dengan benar, tambahkan Secrets di repository Anda:
+---
 
-1. Buka repository di GitHub
-2. Pergi ke **Settings** > **Secrets and variables** > **Actions**
-3. Klik **New repository secret**
-4. Tambahkan:
-   - `SUPABASE_URL` : URL project Supabase Anda
-   - `SUPABASE_SERVICE_ROLE_KEY` : Service role key dari Supabase
+## 📄 Lisensi & Kontribusi
 
-### Workflow yang Dijalankan
-
-Pipeline CI/CD akan otomatis:
-1. Trigger saat push atau pull request ke branch `main`
-2. Setup Python 3.11
-3. Install dependencies dari `requirements.txt`
-4. Jalankan seluruh test suite
-5. Linting dan type checking (jika dikonfigurasi)
-
-### Catatan Keamanan
-
-- File `.env` **tidak boleh** di-commit ke repository. Sudah di-ignore oleh `.gitignore`.
-- Credentials disimpan sebagai **GitHub Secrets** dan diinject sebagai environment variables saat CI/CD berjalan.
-- File `.env.example` hanya berisi placeholder dan aman untuk di-commit.
-
-## Catatan Penting
-
-- Operasi insert **tidak menggunakan transaction eksplisit**. Kegagalan parsial dapat mengakibatkan data tidak konsisten.
-- Master table (`customers`, `sales_persons`, `products`, `coa`, `kategori_pengeluaran`) menggunakan get-or-create: jika nama belum ada, record baru otomatis dibuat.
+Dibuat oleh **Muhammad Shiddiq Azis**. Proyek ini dibuat untuk meningkatkan efisiensi proses ETL transaksi spreadsheet ke database PostgreSQL Supabase serta menyajikan analitik bisnis yang mudah diakses melalui terminal CLI.
